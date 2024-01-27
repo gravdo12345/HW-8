@@ -1,0 +1,12 @@
+2024-01-27 17:29:14 jdbc[3]: exception
+org.h2.jdbc.JdbcSQLSyntaxErrorException: Table "WORKER" already exists; SQL statement:
+-- init_db.sql
+
+-- РўР°Р±Р»РёС†СЏ РґР»СЏ РїСЂР°С†С–РІРЅРёРєС–РІ
+CREATE TABLE worker (
+    ID INT PRIMARY KEY,
+    NAME VARCHAR(1000) NOT NULL CHECK (LENGTH(NAME) >= 2 AND LENGTH(NAME) <= 1000),
+    BIRTHDAY DATE CHECK (YEAR(BIRTHDAY) > 1900),
+    LEVEL VARCHAR(20) NOT NULL CHECK (LEVEL IN ('Trainee', 'Junior', 'Middle', 'Senior')),
+    SALARY INT CHECK (SALARY >= 100 AND SALARY <= 100000)
+); [42101-200]

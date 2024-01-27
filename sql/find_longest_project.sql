@@ -1,0 +1,9 @@
+-- Знайти найдовший проєкт
+SELECT
+    pr.ID AS PROJECT_ID,
+    DATEDIFF(pr.FINISH_DATE, pr.START_DATE) AS DURATION_IN_DAYS
+FROM
+    project pr
+ORDER BY
+    DURATION_IN_DAYS DESC
+LIMIT 1;
