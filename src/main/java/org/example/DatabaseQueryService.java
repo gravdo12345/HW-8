@@ -81,7 +81,7 @@ public class DatabaseQueryService {
 
     public static void main(String[] args) {
         try {
-            // Replace with your database connection details
+            
             Connection connection = DriverManager.getConnection("jdbc:your_database_url", "username", "password");
 
             DatabaseQueryService queryService = new DatabaseQueryService(connection);
@@ -93,7 +93,7 @@ public class DatabaseQueryService {
                 System.out.println("Client: " + client.getName() + ", Project Count: " + client.getProjectCount());
             }
 
-            // Close the connection
+            
             connection.close();
         } catch (Exception e) {
             e.printStackTrace();
