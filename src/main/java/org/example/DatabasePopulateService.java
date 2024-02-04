@@ -21,13 +21,11 @@ public class DatabasePopulateService {
             String sqlFilePath = "sql/populate_db.sql";
             String sql = readSqlFile(sqlFilePath);
 
-            // Execute SQL query
             try (PreparedStatement statement = connection.prepareStatement(sql)) {
                 statement.executeUpdate();
             }
         } catch (Exception e) {
             e.printStackTrace();
-            // Handle the exception or throw a new exception if needed
         }
     }
 
@@ -49,7 +47,6 @@ public class DatabasePopulateService {
             DatabasePopulateService populateService = new DatabasePopulateService(connection);
             populateService.populateDatabase();
 
-            // Close the connection
             connection.close();
         } catch (Exception e) {
             e.printStackTrace();
