@@ -1,11 +1,11 @@
 package org.example;
 
 import java.io.IOException;
-import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
-import java.util.Scanner;
+import java.sql.SQLException;
 
 public class DatabasePopulateService {
 
@@ -18,7 +18,7 @@ public class DatabasePopulateService {
     public void populateDatabase() {
         try {
             // Read and execute populate_db.sql
-            String sqlFilePath = "src/main/resources/sql/populate_db.sql";
+            String sqlFilePath = "sql/populate_db.sql";
             String sql = readSqlFile(sqlFilePath);
 
             // Execute SQL query
@@ -32,20 +32,9 @@ public class DatabasePopulateService {
     }
 
     private String readSqlFile(String sqlFilePath) {
-        InputStream inputStream = getClass().getClassLoader().getResourceAsStream(sqlFilePath);
-
         try {
-            if (inputStream != null) {
-                try (Scanner scanner = new Scanner(inputStream)) {
-                    StringBuilder sqlStatements = new StringBuilder();
-                    while (scanner.hasNextLine()) {
-                        sqlStatements.append(scanner.nextLine()).append("\n");
-                    }
-                    return sqlStatements.toString();
-                }
-            } else {
-                throw new IOException("SQL file not found: " + sqlFilePath);
-            }
+            String content = Files.readString(Path.of(sqlFilePath));
+            return content.replaceAll("\\s+", " ");
         } catch (IOException e) {
             e.printStackTrace();
             // Handle the exception or throw a new exception if needed
@@ -55,12 +44,9 @@ public class DatabasePopulateService {
 
     public static void main(String[] args) {
         try {
-            // Replace with your database connection details
-            Connection connection = DriverManager.getConnection("jdbc:your_database_url", "username", "password");
+            Connection connection = Database.getInstance().getConnection();
 
             DatabasePopulateService populateService = new DatabasePopulateService(connection);
-
-            // Example: Populate the database
             populateService.populateDatabase();
 
             // Close the connection
