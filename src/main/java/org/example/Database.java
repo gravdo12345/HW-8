@@ -9,22 +9,21 @@ public class Database {
     private static final String USER = "sa";
     private static final String PASSWORD = "";
 
-    private static Database instance;
-    private final Connection connection;
+    private static final Database instance = new Database();
 
-    private Database() throws SQLException {
-        this.connection = DriverManager.getConnection(URL, USER, PASSWORD);
+    private Connection connection;
+
+    private Database() {
+        try {
+            Class.forName("org.h2.Driver");
+            this.connection = DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Failed to initialize the database.");
+        }
     }
 
     public static Database getInstance() {
-        if (instance == null) {
-            try {
-                instance = new Database();
-            } catch (SQLException e) {
-                e.printStackTrace();
-                throw new RuntimeException("Failed to initialize the database.");
-            }
-        }
         return instance;
     }
 

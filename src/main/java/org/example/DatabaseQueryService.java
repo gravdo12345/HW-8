@@ -1,66 +1,70 @@
 package org.example;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DatabaseQueryService {
+
     private final Connection connection;
 
     public DatabaseQueryService(Connection connection) {
         this.connection = connection;
     }
 
-    public List<MaxProjectCountClient> findMaxProjectsClient() {
-        List<MaxProjectCountClient> result = new ArrayList<>();
+    public List<ProjectInfo> findLongestProject() {
+        return executeQueryFromFile("find_longest_project.sql");
+    }
+
+    private List<ProjectInfo> executeQueryFromFile(String sqlFilePath) {
+        List<ProjectInfo> results = new ArrayList<>();
 
         try {
-            String sqlFilePath = "sql/find_max_projects_client.sql";
-            String sql = readSqlFile(sqlFilePath);
+            String sqlQuery = readSqlFile(sqlFilePath);
 
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            try (PreparedStatement statement = connection.prepareStatement(sqlQuery)) {
                 try (ResultSet resultSet = statement.executeQuery()) {
                     while (resultSet.next()) {
-                        String name = resultSet.getString("NAME");
-                        int projectCount = resultSet.getInt("PROJECT_COUNT");
+                        String projectName = resultSet.getString("PROJECT_NAME");
+                        int monthCount = resultSet.getInt("MONTH_COUNT");
 
-                        MaxProjectCountClient client = new MaxProjectCountClient(name, projectCount);
-                        result.add(client);
+                        ProjectInfo projectInfo = new ProjectInfo(projectName, monthCount);
+                        results.add(projectInfo);
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-        return result;
+        return results;
     }
 
-    private String readSqlFile(String sqlFilePath) throws Exception {
-        String content = Files.readString(Path.of(sqlFilePath));
-        return content.replaceAll("\\s+", " ");
+    // Метод для зчитування SQL-запиту з файлу
+    private String readSqlFile(String sqlFilePath) throws IOException {
+        return Files.readString(Path.of(sqlFilePath));
     }
 
-    public static void main(String[] args) {
-        try {
-            Connection connection = Database.getInstance().getConnection();
-            DatabaseQueryService queryService = new DatabaseQueryService(connection);
+    // це для читання(букварик типу, ну, жарт короче)
+    public static class ProjectInfo {
+        private final String projectName;
+        private final int monthCount;
 
-            // Example: Find max projects for clients
-            List<MaxProjectCountClient> maxProjectCountClients = queryService.findMaxProjectsClient();
+        public ProjectInfo(String projectName, int monthCount) {
+            this.projectName = projectName;
+            this.monthCount = monthCount;
+        }
 
-            for (MaxProjectCountClient client : maxProjectCountClients) {
-                System.out.println("Client: " + client.getName() + ", Project Count: " + client.getProjectCount());
-            }
+        public String getProjectName() {
+            return projectName;
+        }
 
-            connection.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        public int getMonthCount() {
+            return monthCount;
         }
     }
 }
