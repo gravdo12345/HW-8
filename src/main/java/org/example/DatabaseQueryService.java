@@ -18,10 +18,10 @@ public class DatabaseQueryService {
     }
 
     public List<ProjectInfo> findLongestProject() {
-        return executeQueryFromFile("find_longest_project.sql");
+        return executeQuery("find_longest_project.sql");
     }
 
-    private List<ProjectInfo> executeQueryFromFile(String sqlFilePath) {
+    private List<ProjectInfo> executeQuery(String sqlFilePath) {
         List<ProjectInfo> results = new ArrayList<>();
 
         try {
@@ -44,12 +44,12 @@ public class DatabaseQueryService {
         return results;
     }
 
-    // Метод для зчитування SQL-запиту з файлу
+    // це для читання(букварик типу, ну, жарт короче)
     private String readSqlFile(String sqlFilePath) throws IOException {
         return Files.readString(Path.of(sqlFilePath));
     }
 
-    // це для читання(букварик типу, ну, жарт короче)
+    // передає інформацію(через границю)
     public static class ProjectInfo {
         private final String projectName;
         private final int monthCount;
