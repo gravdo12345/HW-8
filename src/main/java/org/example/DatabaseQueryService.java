@@ -1,127 +1,98 @@
 package org.example;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class DatabaseQueryService {
 
-    private final Connection connection;
+    private final Database database;
 
-    public DatabaseQueryService(Connection connection) {
-        this.connection = connection;
+    public DatabaseQueryService(Database database) {
+        this.database = database;
     }
 
-    // робота PreparedStatement
-    private ResultSet executePreparedStatement(String sqlFilePath, String... params) throws IOException {
-        String sqlQuery = readSqlFile(sqlFilePath);
-        try {
-            PreparedStatement statement = connection.prepareStatement(sqlQuery);
-            for (int i = 0; i < params.length; i++) {
-                statement.setString(i + 1, params[i]);
-            }
-            return statement.executeQuery();
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new IOException("Failed to execute prepared statement", e);
-        }
-    }
-
-    // читає файли(букварик містний)
-    private String readSqlFile(String sqlFilePath) throws IOException {
-        try {
-            return Files.readString(Path.of(sqlFilePath));
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IOException("Failed to read SQL file", e);
-        }
-    }
-
-
+    // Method to find longest project
     public List<ProjectInfo> findLongestProject() {
         List<ProjectInfo> projects = new ArrayList<>();
         try {
-            ResultSet resultSet = executePreparedStatement("find_longest_project.sql");
+            ResultSet resultSet = database.executePreparedStatement("SELECT pr.ID AS PROJECT_ID, DATEDIFF(pr.FINISH_DATE, pr.START_DATE) AS DURATION_IN_DAYS FROM project pr ORDER BY DURATION_IN_DAYS DESC LIMIT 1");
             while (resultSet.next()) {
                 int projectId = resultSet.getInt("PROJECT_ID");
                 int durationInDays = resultSet.getInt("DURATION_IN_DAYS");
                 projects.add(new ProjectInfo(projectId, durationInDays));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return projects;
     }
 
-
+    // Method to find client with the maximum number of projects(king of barbarian)
     public List<ClientInfo> findMaxProjectsClient() {
         List<ClientInfo> clients = new ArrayList<>();
         try {
-            ResultSet resultSet = executePreparedStatement("find_max_projects_client.sql");
+            ResultSet resultSet = database.executePreparedStatement("SELECT c.NAME, COUNT(p.ID) AS PROJECT_COUNT FROM client c JOIN project p ON c.ID = p.CLIENT_ID GROUP BY c.ID, c.NAME ORDER BY PROJECT_COUNT DESC LIMIT 1");
             while (resultSet.next()) {
                 String clientName = resultSet.getString("NAME");
                 int projectCount = resultSet.getInt("PROJECT_COUNT");
                 clients.add(new ClientInfo(clientName, projectCount));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return clients;
     }
 
-
+    // Method to find worker with the highest salary(bro's money's confused)
     public List<WorkerInfo> findMaxSalaryWorker() {
         List<WorkerInfo> workers = new ArrayList<>();
         try {
-            ResultSet resultSet = executePreparedStatement("find_max_salary_worker.sql");
+            ResultSet resultSet = database.executePreparedStatement("SELECT NAME, SALARY FROM worker ORDER BY SALARY DESC LIMIT 1");
             while (resultSet.next()) {
                 String workerName = resultSet.getString("NAME");
                 int salary = resultSet.getInt("SALARY");
                 workers.add(new WorkerInfo(workerName, salary));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return workers;
     }
 
-
+    // Method to find youngest and eldest workers(newbite's and OG's)
     public List<WorkerInfo> findYoungestAndEldestWorkers() {
         List<WorkerInfo> workers = new ArrayList<>();
         try {
-            ResultSet resultSet = executePreparedStatement("find_youngest_eldest_workers.sql");
+            ResultSet resultSet = database.executePreparedStatement("SELECT 'YOUNGEST' AS TYPE, NAME, BIRTHDAY FROM worker ORDER BY BIRTHDAY ASC LIMIT 1 UNION SELECT 'ELDEST' AS TYPE, NAME, BIRTHDAY FROM worker ORDER BY BIRTHDAY DESC LIMIT 1");
             while (resultSet.next()) {
                 String workerName = resultSet.getString("NAME");
                 String workerType = resultSet.getString("TYPE");
                 String birthday = resultSet.getString("BIRTHDAY");
                 workers.add(new WorkerInfo(workerName, workerType, birthday));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return workers;
     }
 
-
+    // Method to print project prices(better print them moneyzzz)
     public List<ProjectPrice> printProjectPrices() {
         List<ProjectPrice> prices = new ArrayList<>();
         try {
-            ResultSet resultSet = executePreparedStatement("print_project_prices.sql");
+            ResultSet resultSet = database.executePreparedStatement("SELECT pr.ID AS PROJECT_ID, SUM(w.SALARY * DATEDIFF(pr.FINISH_DATE, pr.START_DATE)) AS PRICE FROM project pr JOIN project_worker pw ON pr.ID = pw.PROJECT_ID JOIN worker w ON pw.WORKER_ID = w.ID GROUP BY pr.ID ORDER BY PRICE DESC");
             while (resultSet.next()) {
                 int projectId = resultSet.getInt("PROJECT_ID");
                 int price = resultSet.getInt("PRICE");
                 prices.add(new ProjectPrice(projectId, price));
             }
-        } catch (Exception e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
         return prices;
     }
-
 
     public static class ProjectInfo {
         private final int projectId;
@@ -141,7 +112,6 @@ public class DatabaseQueryService {
         }
     }
 
-
     public static class ClientInfo {
         private final String clientName;
         private final int projectCount;
@@ -159,7 +129,6 @@ public class DatabaseQueryService {
             return projectCount;
         }
     }
-
 
     public static class WorkerInfo {
         private final String workerName;
@@ -190,7 +159,6 @@ public class DatabaseQueryService {
             return birthday;
         }
     }
-
 
     public static class ProjectPrice {
         private final int projectId;

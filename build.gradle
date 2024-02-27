@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'org.flywaydb.flyway' version '8.0.0'
 }
 
 repositories {
@@ -8,5 +9,14 @@ repositories {
 
 dependencies {
     implementation 'com.h2database:h2:1.4.200'
+    implementation 'org.flywaydb:flyway-core:7.5.4'
 }
+
+flyway {
+    url = 'jdbc:h2:mem:test'
+    user = 'sa'
+    password = ''
+}
+
 group = 'org.example'
+

@@ -2,6 +2,8 @@ package org.example;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 public class Database {
@@ -29,5 +31,13 @@ public class Database {
 
     public Connection getConnection() {
         return connection;
+    }
+
+    public ResultSet executePreparedStatement(String sql, String... params) throws SQLException {
+        PreparedStatement statement = connection.prepareStatement(sql);
+        for (int i = 0; i < params.length; i++) {
+            statement.setString(i + 1, params[i]);
+        }
+        return statement.executeQuery();
     }
 }
