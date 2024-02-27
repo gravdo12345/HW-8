@@ -1,43 +1,100 @@
 package org.example;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 
-public class Database {
-    private static final String URL = "jdbc:h2:mem:test;DB_CLOSE_DELAY=-1";
-    private static final String USER = "sa";
-    private static final String PASSWORD = "";
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
-    private static final Database instance = new Database();
 
-    private Connection connection;
 
-    private Database() {
-        try {
-            Class.forName("org.h2.Driver");
-            this.connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Failed to initialize the database.");
+public class ClientService {
+
+    private final Connection connection;
+
+    public ClientService(Connection connection) {
+        this.connection = connection;
+    }
+
+    public long create(String name) throws SQLException {
+        String sql = "INSERT INTO client (NAME) VALUES (?)";
+        try (PreparedStatement statement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            statement.setString(1, name);
+            statement.executeUpdate();
+            ResultSet generatedKeys = statement.getGeneratedKeys();
+            if (generatedKeys.next()) {
+                return generatedKeys.getLong(1);
+            } else {
+                throw new SQLException("Creating client failed, no ID obtained.");
+            }
         }
     }
 
-    public static Database getInstance() {
-        return instance;
-    }
-
-    public Connection getConnection() {
-        return connection;
-    }
-
-    public ResultSet executePreparedStatement(String sql, String... params) throws SQLException {
-        PreparedStatement statement = connection.prepareStatement(sql);
-        for (int i = 0; i < params.length; i++) {
-            statement.setString(i + 1, params[i]);
+    public String getById(long id) throws SQLException {
+        String sql = "SELECT NAME FROM client WHERE ID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getString("NAME");
+                } else {
+                    throw new SQLException("Client not found with id: " + id);
+                }
+            }
         }
-        return statement.executeQuery();
+    }
+
+    public void setName(long id, String name) throws SQLException {
+        String sql = "UPDATE client SET NAME = ? WHERE ID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setString(1, name);
+            statement.setLong(2, id);
+            int affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Updating client failed, no rows affected.");
+            }
+        }
+    }
+
+    public void deleteById(long id) throws SQLException {
+        String sql = "DELETE FROM client WHERE ID = ?";
+        try (PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, id);
+            int affectedRows = statement.executeUpdate();
+            if (affectedRows == 0) {
+                throw new SQLException("Deleting client failed, no rows affected.");
+            }
+        }
+    }
+
+    public List<Client> listAll() throws SQLException {
+        List<Client> clients = new ArrayList<>();
+        String sql = "SELECT ID, NAME FROM client";
+        try (Statement statement = connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sql)) {
+            while (resultSet.next()) {
+                long id = resultSet.getLong("ID");
+                String name = resultSet.getString("NAME");
+                clients.add(new Client(id, name));
+            }
+        }
+        return clients;
+    }
+
+    public static class Client {
+        private final long id;
+        private final String name;
+
+        public Client(long id, String name) {
+            this.id = id;
+            this.name = name;
+        }
+
+        public long getId() {
+            return id;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 }
